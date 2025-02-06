@@ -1,0 +1,158 @@
+@* EventList.razor *@
+@page "/events"
+@using EventEase.Components
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+
+<h1>Event List</h1>
+
+@if (Events == null)
+{
+    <p>Loading events...</p>
+}
+else if (!Events.Any())
+{
+    <p>No events found.</p>
+}
+else
+{
+    <div class="event-list">
+        @foreach (var eventItem in PaginatedEvents)
+        {
+            <EventCard Event="@eventItem" />
+        }
+    </div>
+}
+
+<div class="pagination-controls">
+    <button @onclick="PreviousPage" disabled="@(!HasPreviousPage)" class="btn">Previous</button>
+    <button @onclick="NextPage" disabled="@(!HasNextPage)" class="btn">Next</button>
+</div>
+
+@code {
+    private List<EventModel>? Events;
+    private List<EventModel> PaginatedEvents = new();
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Events = await LoadEventsAsync();
+        PaginateEvents();
+    }
+
+    private async Task<List<EventModel>> LoadEventsAsync()
+    {
+        // Fetch events from the service
+        return await Task.FromResult(EventService.GetAllEvents());
+    }
+
+    private void PaginateEvents()
+    {
+        PaginatedEvents = Events?
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList() ?? new List<EventModel>();
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            PaginateEvents();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage * pageSize < Events?.Count)
+        {
+            currentPage++;
+            PaginateEvents();
+        }
+    }
+
+    private bool HasPreviousPage => currentPage > 1;
+    private bool HasNextPage => currentPage * pageSize < Events?.Count;
+}
+
+<style>
+    .event-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .event-card {
+        flex: 1 1 calc(33.333% - 1rem);
+        box-sizing: border-box;
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-0.5rem);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-img-top {
+        border-radius: 0.25rem 0.25rem 0 0;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 0.5rem;
+        padding: 0.5rem 1rem;
+        text-align: center;
+        border-radius: 0.25rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .pagination-controls {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+</style>

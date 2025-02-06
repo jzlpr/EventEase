@@ -1,0 +1,91 @@
+@* EventDetails.razor *@
+@page "/eventdetails/{eventId:int}"
+@using EventEase.Models
+@using EventEase.Services
+@using EventEase.Components
+@inject AttendanceService AttendanceService
+
+<h1>Event Details</h1>
+
+@if (eventDetails != null)
+{
+    <div>
+        <h2>@eventDetails.EventName</h2>
+        <p>@eventDetails.EventDate.ToString("MMMM dd, yyyy")</p>
+        <p>@eventDetails.EventLocation</p>
+
+        <h3>Participants</h3>
+        @if (attendances.Count > 0)
+        {
+            <ul>
+                @foreach (var attendance in attendances)
+                {
+                    <li>@attendance.UserName (@attendance.UserEmail)</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No participants yet.</p>
+        }
+
+        <h3>Mark Your Attendance</h3>
+        <EditForm Model="@attendanceModel" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <InputText id="name" @bind-Value="attendanceModel.UserName" class="form-control" />
+                <ValidationMessage For="@(() => attendanceModel.UserName)" />
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <InputText id="email" @bind-Value="attendanceModel.UserEmail" type="email" class="form-control" />
+                <small id="emailHelp" class="form-text text-muted">Counter me in</small>
+                <ValidationMessage For="@(() => attendanceModel.UserEmail)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </EditForm>
+
+        @if (attendanceSuccess)
+        {
+            <p class="text-success">Attendance marked successfully!</p>
+        }
+    </div>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    [Parameter]
+    public int eventId { get; set; }
+
+    private EventModel? eventDetails;
+    private AttendanceModel attendanceModel = new AttendanceModel();
+    private List<AttendanceModel> attendances = new();
+    private bool attendanceSuccess = false;
+
+    [Inject]
+    private EventService? EventService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Fetch event details based on eventId
+        eventDetails = EventService?.GetEventById(eventId);
+        attendanceModel.EventId = eventId;
+        attendances = AttendanceService.GetAttendancesByEventId(eventId);
+    }
+
+    private void HandleValidSubmit()
+    {
+        // Add attendance to the service
+        AttendanceService.AddAttendance(attendanceModel);
+        attendanceSuccess = true;
+        attendances = AttendanceService.GetAttendancesByEventId(eventId); // Refresh the list
+    }
+}

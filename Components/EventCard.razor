@@ -1,0 +1,45 @@
+@* EventCard.razor *@
+@using EventEase.Models
+@implements IDisposable
+
+<ErrorBoundary>
+    <ChildContent>
+        <a href="@($"/eventdetails/{Event?.Id}")" style="text-decoration: none;">
+            <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="https://placehold.co/286x180" alt="Card image cap">
+                <div class="card-body">
+                    <h5 class="card-title">@Event?.EventName</h5>
+                    <p class="card-text">@Event?.EventDate.ToString("MMMM dd, yyyy")</p>
+                    <p class="card-text">@Event?.EventLocation</p>
+                    <NavLink href="@($"/eventdetails/{Event?.Id}")" class="btn btn-primary">View Details</NavLink>
+                    @* <NavLink href="/registration" class="btn btn-success">Register</NavLink> *@
+                </div>
+            </div>
+        </a>
+    </ChildContent>
+    <ErrorContent>
+        <p class="error">Sorry, there was an error loading this event.</p>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter]
+    public EventModel? Event { get; set; }
+
+    private EventModel? previousEvent;
+
+    protected override bool ShouldRender()
+    {
+        return Event != previousEvent;
+    }
+
+    protected override void OnParametersSet()
+    {
+        previousEvent = Event;
+    }
+
+    public void Dispose()
+    {
+        // Dispose resources if any
+    }
+}
